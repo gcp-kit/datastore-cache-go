@@ -3,7 +3,7 @@ package redis
 import (
 	"context"
 
-	"github.com/gcp-kit/datastore-cache-go/cache"
+	"github.com/gcp-kit/datastore-cache-go"
 	"github.com/gomodule/redigo/redis"
 	"golang.org/x/xerrors"
 	"google.golang.org/genproto/googleapis/datastore/v1"

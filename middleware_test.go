@@ -7,7 +7,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/gcp-kit/datastore-cache-go/cache/mock"
+	"github.com/gcp-kit/datastore-cache-go/mock"
 	"github.com/golang/mock/gomock"
 	"google.golang.org/genproto/googleapis/datastore/v1"
 	"google.golang.org/grpc"
