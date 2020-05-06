@@ -50,7 +50,7 @@ func (r *Redis) runInTransaction(f func(conn redis.Conn) error) ([]interface{}, 
 }
 
 func (r *Redis) GetMulti(
-	ctx context.Context,
+	_ context.Context,
 	projectID string,
 	keys []*datastore.Key,
 ) (items []*datastore.EntityResult, err error) {
@@ -123,7 +123,7 @@ func (r *Redis) GetMulti(
 	return items, nil
 }
 
-func (r *Redis) SetMulti(ctx context.Context, projectID string, items []*datastore.EntityResult) (err error) {
+func (r *Redis) SetMulti(_ context.Context, projectID string, items []*datastore.EntityResult) (err error) {
 	if isReserved(projectID) {
 		return nil
 	}
@@ -165,7 +165,7 @@ func (r *Redis) SetMulti(ctx context.Context, projectID string, items []*datasto
 	return nil
 }
 
-func (r *Redis) DeleteMulti(ctx context.Context, projectID string, keys []*datastore.Key) (err error) {
+func (r *Redis) DeleteMulti(_ context.Context, projectID string, keys []*datastore.Key) (err error) {
 	if isReserved(projectID) {
 		return nil
 	}
