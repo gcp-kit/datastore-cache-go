@@ -3,9 +3,8 @@ package querycache
 import (
 	"context"
 
-	"golang.org/x/xerrors"
-
 	"cloud.google.com/go/datastore"
+	"golang.org/x/xerrors"
 )
 
 // GetALl - キャッシュが利用されるようなqueryの実行
