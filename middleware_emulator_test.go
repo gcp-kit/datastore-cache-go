@@ -1,5 +1,4 @@
 //+abuild emulator,redis
-
 package cache_test
 
 import (
