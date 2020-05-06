@@ -4,13 +4,13 @@ package cache_test
 
 import (
 	"context"
-	"github.com/gcp-kit/datastore-cache-go/cache"
-	"github.com/gcp-kit/datastore-cache-go/cache/redis"
 	"os"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"github.com/gcp-kit/datastore-cache-go/cache"
+	"github.com/gcp-kit/datastore-cache-go/cache/redis"
 	redigo "github.com/gomodule/redigo/redis"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
