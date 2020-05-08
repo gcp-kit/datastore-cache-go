@@ -11,7 +11,7 @@ import (
 	"google.golang.org/genproto/googleapis/datastore/v1"
 )
 
-//go:generate mockgen -source=$GOFILE -destination=mock_$GOFILE -package=mock -self_package=github.com/gcp-kit/datastore-cache-go/cache -destination ./mock/mock_cache.go
+//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/mock_$GOFILE -self_package=github.com/gcp-kit/datastore-cache-go
 
 // Cache - データをキャッシュする機構。
 // このインターフェイスを満たしたものをmiddlewareに渡すことで動作する。

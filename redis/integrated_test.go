@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gcp-kit/datastore-cache-go/cache/redis"
+	"github.com/gcp-kit/datastore-cache-go/redis"
 	redigo "github.com/gomodule/redigo/redis"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/genproto/googleapis/datastore/v1"
