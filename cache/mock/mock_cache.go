@@ -6,9 +6,10 @@ package mock
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	datastore "google.golang.org/genproto/googleapis/datastore/v1"
-	reflect "reflect"
 )
 
 // MockCache is a mock of Cache interface

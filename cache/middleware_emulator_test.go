@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
-	cache "github.com/gcp-kit/datastore-cache-go"
-	"github.com/gcp-kit/datastore-cache-go/redis"
+	"github.com/gcp-kit/datastore-cache-go/cache"
+	"github.com/gcp-kit/datastore-cache-go/cache/redis"
 	redigo "github.com/gomodule/redigo/redis"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
