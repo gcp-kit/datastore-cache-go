@@ -5,34 +5,49 @@ import (
 	"log"
 
 	"golang.org/x/xerrors"
-
 	"google.golang.org/genproto/googleapis/datastore/v1"
 	"google.golang.org/grpc"
 )
 
-// Middleware - キャッシュを管理するミドルウェア。
+// Middleware - Middleware that manages the cache.
+//                └── キャッシュを管理するミドルウェア。
 type Middleware struct {
-	cache             Cache           // Cache - Cache interfaceを満たす構造体。これによりキャッシュを実現する。
-	CacheDeleteTiming DeleteTiming    // DeleteTiming - Cacheの削除を行うタイミング。
-	CachingModeFunc   CachingModeFunc // CachingModeFunc - Cacheの削除や状態を個別に管理する関数。
-	Logger            *log.Logger
+	// Cache - A structure that fills the Cache interface. This realizes the cache.
+	//           └── Cache interfaceを満たす構造体。これによりキャッシュを実現する。
+	cache Cache
+	// DeleteTiming - Timing to delete Cache.
+	//                  └── Cacheの削除を行うタイミング。
+	CacheDeleteTiming DeleteTiming
+	// CachingModeFunc - A function that individually manages cache deletion and status.
+	//                     └── Cacheの削除や状態を個別に管理する関数。
+	CachingModeFunc CachingModeFunc
+	Logger          *log.Logger
 }
 
-// UnaryClientMethod - Datastoreの呼び出しメソッド
+// UnaryClientMethod - Datastore invocation method
+//                       └── Datastoreの呼び出しメソッド
 type UnaryClientMethod = string
 
 const (
-	// UnaryClientMethodLookup - Get, GetMultiなどの問い合せにより呼ばれる
+	// UnaryClientMethodLookup - Called by inquiries such as Get and GetMulti
+	//                             └── Get, GetMultiなどの問い合せにより呼ばれる
 	UnaryClientMethodLookup UnaryClientMethod = "/google.datastore.v1.Datastore/Lookup"
 
-	// UnaryClientMethodCommit - Put, PutMulti, Delete, DeleteMulti, Mutateなどの問い合わせにより呼ばれる
+	// UnaryClientMethodCommit - Called by queries such as Put, PutMulti, Delete, DeleteMulti, Mutate, etc.
+	//                             └── Put, PutMulti, Delete, DeleteMulti, Mutateなどの問い合わせにより呼ばれる
 	UnaryClientMethodCommit UnaryClientMethod = "/google.datastore.v1.Datastore/Commit"
 )
 
-// NewMiddleware - Datastoreの操作をキャッシュするMiddlewareを初期化する。
-// cache - Cacheインターフェイスを満たす構造体である必要がある。
-// cacheインターフェイスを操作し、キャッシュを実現する。
+// NewMiddleware - Initialize Middleware that caches Datastore operations.
+//                   └── Datastoreの操作をキャッシュするMiddlewareを初期化する
+// cache - It must be a structure that satisfies the Cache interface.
+//           └── Cacheインターフェイスを満たす構造体である必要がある。
+// Operate the cache interface to realize the cache.
+//    └── cacheインターフェイスを操作し、キャッシュを実現する
 //
+// Default behavior:
+//   - cache is deleted before and after update operation
+//   - Cache all elements
 // デフォルト動作:
 //   - cacheは更新動作の前後で削除される
 //   - 全ての要素をキャッシュする
@@ -44,7 +59,8 @@ func NewMiddleware(cache Cache) *Middleware {
 	}
 }
 
-// UnaryClientInterceptor - datastoreのgRPCから呼ばれる
+// UnaryClientInterceptor - Called from Datastore gRPC.
+//                            └── DatastoreのgRPCから呼ばれる
 func (m *Middleware) UnaryClientInterceptor(
 	ctx context.Context,
 	method string, req,
@@ -60,7 +76,8 @@ func (m *Middleware) UnaryClientInterceptor(
 
 	switch method {
 	case UnaryClientMethodLookup:
-		// キャッシュの参照
+		// Cache reference
+		//    └── キャッシュの参照
 		return m.lookup(
 			ctx,
 			cachingMode,
@@ -72,7 +89,8 @@ func (m *Middleware) UnaryClientInterceptor(
 			opts...,
 		)
 	case UnaryClientMethodCommit:
-		// キャッシュの削除
+		// Clear cache
+		//    └── キャッシュの削除
 		return m.commit(
 			ctx,
 			cachingMode,
@@ -88,7 +106,8 @@ func (m *Middleware) UnaryClientInterceptor(
 	}
 }
 
-// lookup - DatastoreのLookupのときの処理
+// lookup - Process at Lookup of Datastore.
+//            └── DatastoreのLookupのときの処理
 func (m *Middleware) lookup(
 	ctx context.Context,
 	cachingMode CachingModeType,
@@ -99,12 +118,14 @@ func (m *Middleware) lookup(
 	invoker grpc.UnaryInvoker,
 	opts ...grpc.CallOption,
 ) (err error) {
-	// トランザクションが有効であれば対象としない
+	// Do not include if transaction is valid
+	//    └── トランザクションが有効であれば対象としない
 	if req.GetReadOptions().GetTransaction() != nil || cachingMode == CachingModeNever {
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 
-	// キャッシュの取得
+	// Get cache
+	//    └── キャッシュの取得
 	if cachingMode&CachingModeReadOnly != 0 {
 		err = m.beforeLookup(ctx, req, reply)
 		if err != nil {
@@ -117,14 +138,16 @@ func (m *Middleware) lookup(
 		return nil
 	}
 
-	// 本来の処理
+	// Original processing
+	//    └── 本来の処理
 	invokerReply := new(datastore.LookupResponse)
 	err = invoker(ctx, method, req, invokerReply, cc, opts...)
 	if err != nil {
 		return err
 	}
 
-	// キャッシュの保存
+	// Save cache
+	//    └── キャッシュの保存
 	if cachingMode&CachingModeWriteOnly != 0 {
 		err = m.afterLookup(ctx, req, invokerReply)
 		err = xerrors.Errorf("cache after Lookup failed: %w", err)
@@ -138,7 +161,8 @@ func (m *Middleware) lookup(
 	return nil
 }
 
-// beforeLookup - Lookup前に呼ばれる
+// beforeLookup - Called before Lookup.
+//                  └── Lookup前に呼ばれる
 func (m *Middleware) beforeLookup(
 	ctx context.Context,
 	req *datastore.LookupRequest,
@@ -176,7 +200,8 @@ func (m *Middleware) beforeLookup(
 	return nil
 }
 
-// afterLookup - Lookup後に呼ばれる
+// afterLookup - Called after Lookup.
+//                 └── Lookup後に呼ばれる
 func (m *Middleware) afterLookup(
 	ctx context.Context,
 	req *datastore.LookupRequest,
@@ -189,7 +214,8 @@ func (m *Middleware) afterLookup(
 	return m.cache.SetMulti(ctx, req.ProjectId, entities)
 }
 
-// commit - Commitのときの処理
+// commit - Processing at Commit.
+//            └── Commitのときの処理
 func (m *Middleware) commit(
 	ctx context.Context,
 	cachingMode CachingModeType,
@@ -200,7 +226,8 @@ func (m *Middleware) commit(
 	invoker grpc.UnaryInvoker,
 	opts ...grpc.CallOption,
 ) (err error) {
-	// キャッシュの削除
+	// Clear cache
+	//    └── キャッシュの削除
 	err = m.beforeCommit(ctx, req, cachingMode)
 	if err != nil {
 		err = xerrors.Errorf("cache before commit failed: %w", err)
@@ -208,13 +235,15 @@ func (m *Middleware) commit(
 		return err
 	}
 
-	// 本来の処理
+	// Original processing
+	//    └── 本来の処理
 	err = invoker(ctx, method, req, reply, cc, opts...)
 	if err != nil {
 		return err
 	}
 
-	// キャッシュの削除
+	// Clear cache
+	//    └── キャッシュの削除
 	err = m.afterCommit(ctx, req, cachingMode)
 	if err != nil {
 		err = xerrors.Errorf("cache after commit failed: %w", err)
@@ -223,7 +252,8 @@ func (m *Middleware) commit(
 	return nil
 }
 
-// beforeCommit - Commit前に呼ばれる
+// beforeCommit - Called before commit.
+//                  └── Commit前に呼ばれる
 func (m *Middleware) beforeCommit(
 	ctx context.Context,
 	req *datastore.CommitRequest,
@@ -235,7 +265,8 @@ func (m *Middleware) beforeCommit(
 	return m.deleteCache(ctx, req)
 }
 
-// afterCommit - Commit後に呼ばれる
+// afterCommit - Called after Commit.
+//                 └── Commit後に呼ばれる
 func (m *Middleware) afterCommit(
 	ctx context.Context,
 	req *datastore.CommitRequest,
@@ -247,7 +278,8 @@ func (m *Middleware) afterCommit(
 	return m.deleteCache(ctx, req)
 }
 
-// deleteCache - CacheをDeleteさせる
+// deleteCache - Delete Cache.
+//                 └── CacheをDeleteさせる
 func (m *Middleware) deleteCache(ctx context.Context, req *datastore.CommitRequest) (err error) {
 	deleteKeys := make([]*datastore.Key, 0)
 
