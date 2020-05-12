@@ -6,27 +6,35 @@ import (
 	"google.golang.org/grpc"
 )
 
-// CachingModeType - Cacheの制御を行う
+// CachingModeType - control cache
+//                     └── Cacheの制御を行う
 type CachingModeType int
 
 const (
-	// CachingModeNever - キャッシュを一切使わない
+	// CachingModeNever - never use cache (キャッシュを一切使わない)
 	CachingModeNever CachingModeType = 0
 
-	// CachingModeWriteOnly - キャッシュの書き込みのみを行う。
-	// CacheDeleteTimingにてCacheDeleteTiming_Noneを使用していた場合でも、キャッシュの書き込みを行う。
+	// CachingModeWriteOnly - only write to cache
+	//                          └── キャッシュの書き込みのみを行う
+	// Cache is written even if Cache Delete Timing None is used in Cache Delete Timing.
+	//    └── CacheDeleteTimingにてCacheDeleteTiming_Noneを使用していた場合でも、キャッシュの書き込みを行う
 	CachingModeWriteOnly CachingModeType = 1
 
-	// CachingModeReadOnly - キャッシュの読み取りのみを行う。
-	// キャッシュされてないデータがあろうとも、新しくキャッシュの書き込みは行わない。
+	// CachingModeReadOnly - only read cache
+	//                         └── キャッシュの読み取りのみを行う
+	// Even if there is uncached data, new cache is not written.
+	//    └── キャッシュされてないデータがあろうとも、新しくキャッシュの書き込みは行わない
 	CachingModeReadOnly CachingModeType = 2
 
-	// CachingModeReadWrite - キャッシュの読み取りと書き込みを行う。
-	// デフォルトの動作。
+	// CachingModeReadWrite - read and write the cache
+	//                          └── キャッシュの読み取りと書き込みを行う
+	// Default behavior
+	//    └── デフォルトの動作
 	CachingModeReadWrite CachingModeType = 3
 )
 
-// CachingModeFunc - Cacheの制御を行う関数。
+// CachingModeFunc - function that controls cache
+//                     └── Cacheの制御を行う関数
 type CachingModeFunc = func(
 	ctx context.Context,
 	method string,
