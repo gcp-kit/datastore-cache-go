@@ -96,6 +96,17 @@ func TestEmulator_SetGet(t *testing.T) {
 		t.Fatalf("failed to put new data: %+v", err)
 	}
 
+	var list []*TestData
+	q := datastore.NewQuery("test")
+	q = q.Filter("Name =", "foo")
+	if _, err := client.GetAll(ctx, q, &list); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(list) != 1 {
+		t.Errorf("retrieved data differed: %d (expected: %d)", len(list), 1)
+	}
+
 	var ret TestData
 
 	if err := client.Get(ctx, key, &ret); err != nil {
@@ -103,7 +114,7 @@ func TestEmulator_SetGet(t *testing.T) {
 	}
 
 	if ret.Name != data.Name {
-		t.Errorf("retrieved data differed: %s(expected: %s)", ret.Name, data.Name)
+		t.Errorf("retrieved data differed: %s (expected: %s)", ret.Name, data.Name)
 	}
 
 	ret.Name = ""
@@ -113,7 +124,7 @@ func TestEmulator_SetGet(t *testing.T) {
 	}
 
 	if ret.Name != data.Name {
-		t.Errorf("retrieved data FROM CACHE differed: %s(expected: %s)", ret.Name, data.Name)
+		t.Errorf("retrieved data FROM CACHE differed: %s (expected: %s)", ret.Name, data.Name)
 	}
 }
 
