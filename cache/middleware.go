@@ -102,7 +102,7 @@ func (m *Middleware) UnaryClientInterceptor(
 			opts...,
 		)
 	default:
-		return invoker(ctx, method, req, invoker, cc, opts...)
+		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }
 
