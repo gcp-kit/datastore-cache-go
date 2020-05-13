@@ -84,9 +84,13 @@ type TestData struct {
 func TestEmulator_SetGet(t *testing.T) {
 	client := initClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
 	key := datastore.IncompleteKey("test", nil)
+	defer func() {
+		if err := client.Delete(ctx, key); err != nil {
+			t.Error(err)
+		}
+		cancel()
+	}()
 
 	data := &TestData{Name: "foo"}
 
